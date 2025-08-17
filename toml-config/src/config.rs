@@ -8,6 +8,8 @@ mod parsers;
 mod spanned;
 mod value;
 
+use jay_config::bar::BarLocation;
+
 pub use crate::config::parsers::input_mode::InputMode;
 use {
     crate::{
@@ -511,6 +513,7 @@ pub struct Config {
     pub middle_click_paste: Option<bool>,
     pub input_modes: AHashMap<String, InputMode>,
     pub workspace_display_order: Option<WorkspaceDisplayOrder>,
+    pub bar_location: Option<BarLocation>,
 }
 
 #[derive(Debug, Error)]

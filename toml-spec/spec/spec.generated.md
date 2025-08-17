@@ -797,6 +797,25 @@ This table is a tagged union. The variant is determined by the `type` field. It 
     The value of this field should be a string.
 
 
+<a name="types-BarLocation"></a>
+### `BarLocation`
+
+Built-in bar display location.
+
+Values of this type should be strings.
+
+The string should have one of the following values:
+
+- `top`:
+
+  Displays the built-in bar at the top.
+
+- `bottom`:
+
+  Displays the built-in bar at the bottom.
+
+
+
 <a name="types-Brightness"></a>
 ### `Brightness`
 
@@ -1989,6 +2008,20 @@ The table has the following fields:
     ```
 
   The value of this field should be a [WorkspaceDisplayOrder](#types-WorkspaceDisplayOrder).
+
+- `bar-location` (optional):
+
+  Configures where the built-in bar is displayed.
+  
+  The default is `top`.
+  
+  - Example:
+  
+    ```toml
+    bar-location = "bottom"
+    ```
+
+  The value of this field should be a [BarLocation](#types-BarLocation).
 
 
 <a name="types-Connector"></a>

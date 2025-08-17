@@ -2,6 +2,7 @@ use {
     crate::{
         _private::{ClientCriterionIpc, PollableId, WindowCriterionIpc, WireMode},
         Axis, Direction, PciId, Workspace,
+        bar::BarLocation,
         client::{Client, ClientMatcher},
         input::{
             FocusFollowsMouseMode, InputDevice, LayerDirection, Seat, SwitchEvent, Timeline,
@@ -763,6 +764,9 @@ pub enum ClientMessage<'a> {
     },
     SetWorkspaceDisplayOrder {
         order: WorkspaceDisplayOrder,
+    },
+    SetBarLocation {
+        location: BarLocation,
     },
 }
 

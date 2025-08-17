@@ -572,6 +572,14 @@
         }
       ]
     },
+    "BarLocation": {
+      "type": "string",
+      "description": "Built-in bar display location.\n",
+      "enum": [
+        "top",
+        "bottom"
+      ]
+    },
     "Brightness": {
       "description": "The brightness setting of an output.\n",
       "anyOf": [
@@ -995,6 +1003,10 @@
         "workspace-display-order": {
           "description": "Configures the order of workspaces displayed.\n\nThe default is `manual`.\n\n- Example:\n\n  ```toml\n  workspace-display-order = \"sorted\"\n  ```\n",
           "$ref": "#/$defs/WorkspaceDisplayOrder"
+        },
+        "bar-location": {
+          "description": "Configures where the built-in bar is displayed.\n\nThe default is `top`.\n\n- Example:\n\n  ```toml\n  bar-location = \"bottom\"\n  ```\n",
+          "$ref": "#/$defs/BarLocation"
         }
       },
       "required": []

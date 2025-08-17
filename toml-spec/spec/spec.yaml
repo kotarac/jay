@@ -2816,6 +2816,19 @@ Config:
           ```toml
           workspace-display-order = "sorted"
           ```
+    bar-location:
+      ref: BarLocation
+      required: false
+      description: |
+        Configures where the built-in bar is displayed.
+
+        The default is `top`.
+
+        - Example:
+
+          ```toml
+          bar-location = "bottom"
+          ```
 
 
 Idle:
@@ -4029,3 +4042,14 @@ WorkspaceDisplayOrder:
       description: Workspaces are not sorted and can be manually dragged.
     - value: sorted
       description: Workspaces are sorted alphabetically and cannot be manually dragged.
+
+
+BarLocation:
+  kind: string
+  description: |
+    Built-in bar display location.
+  values:
+     - value: top
+       description: Displays the built-in bar at the top.
+     - value: bottom
+       description: Displays the built-in bar at the bottom.

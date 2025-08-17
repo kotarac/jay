@@ -66,6 +66,7 @@ use {
     },
     ahash::AHashMap,
     jay_config::{
+        bar::BarLocation,
         video::{TearingMode as ConfigTearingMode, Transform, VrrMode as ConfigVrrMode},
         workspace::WorkspaceDisplayOrder,
     },
@@ -1084,6 +1085,10 @@ impl OutputNode {
             }
         }
         self.schedule_update_render_data();
+    }
+
+    pub fn handle_bar_location_update(self: &Rc<Self>) {
+        // TODO
     }
 
     pub fn update_visible(&self) {

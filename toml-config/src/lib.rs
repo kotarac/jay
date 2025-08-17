@@ -23,6 +23,7 @@ use {
     ahash::{AHashMap, AHashSet},
     error_reporter::Report,
     jay_config::{
+        bar::set_bar_location,
         client::Client,
         config, config_dir,
         exec::{Command, set_env, unset_env},
@@ -1309,6 +1310,9 @@ fn load_config(initial_load: bool, persistent: &Rc<PersistentState>) {
     }
     if let Some(v) = config.workspace_display_order {
         set_workspace_display_order(v);
+    }
+    if let Some(v) = config.bar_location {
+        set_bar_location(v);
     }
 }
 

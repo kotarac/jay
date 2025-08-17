@@ -12,6 +12,7 @@ use {
             logging,
         },
         Axis, Direction, ModifiedKeySym, PciId, Workspace,
+        bar::BarLocation,
         client::{Client, ClientCriterion, ClientMatcher, MatchedClient},
         exec::Command,
         input::{
@@ -990,6 +991,10 @@ impl ConfigClient {
 
     pub fn set_workspace_display_order(&self, order: WorkspaceDisplayOrder) {
         self.send(&ClientMessage::SetWorkspaceDisplayOrder { order });
+    }
+
+    pub fn set_bar_location(&self, location: BarLocation) {
+        self.send(&ClientMessage::SetBarLocation { location });
     }
 
     pub fn seat_create_mark(&self, seat: Seat, kc: Option<u32>) {

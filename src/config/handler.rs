@@ -52,6 +52,7 @@ use {
             ipc::{ClientMessage, Response, ServerMessage, WorkspaceSource},
         },
         Axis, Direction, Workspace,
+        bar::BarLocation,
         client::{Client as ConfigClient, ClientMatcher},
         input::{
             FocusFollowsMouseMode, InputDevice, LayerDirection, Seat, Timeline,
@@ -1358,6 +1359,13 @@ impl ConfigProxyHandler {
         self.state.workspace_display_order.set(order);
         for output in self.state.root.outputs.lock().values() {
             output.handle_workspace_display_order_update();
+        }
+    }
+
+    fn handle_set_bar_location(&self, location: BarLocation) {
+        self.state.bar_location.set(location);
+        for output in self.state.root.outputs.lock().values() {
+            output.handle_bar_location_update();
         }
     }
 
@@ -3118,6 +3126,7 @@ impl ConfigProxyHandler {
             ClientMessage::SeatCopyMark { seat, src, dst } => self
                 .handle_seat_copy_mark(seat, src, dst)
                 .wrn("seat_copy_mark")?,
+            ClientMessage::SetBarLocation { location } => self.handle_set_bar_location(location),
         }
         Ok(())
     }

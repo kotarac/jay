@@ -126,6 +126,7 @@ use {
     bstr::ByteSlice,
     jay_config::{
         PciId,
+        bar::BarLocation,
         video::{GfxApi, Transform},
         window::TileState,
         workspace::WorkspaceDisplayOrder,
@@ -278,6 +279,7 @@ pub struct State {
     pub xdg_surface_configure_events: AsyncQueue<XdgSurfaceConfigureEvent>,
     pub workspace_display_order: Cell<WorkspaceDisplayOrder>,
     pub outputs_without_hc: NumCell<usize>,
+    pub bar_location: Cell<BarLocation>,
 }
 
 // impl Drop for State {
