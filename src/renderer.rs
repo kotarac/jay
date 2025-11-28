@@ -12,7 +12,7 @@ use {
         renderer::renderer_base::RendererBase,
         scale::Scale,
         state::State,
-        theme::Color,
+        theme::{BarPosition, Color},
         tree::{
             ContainerNode, DisplayNode, FloatNode, OutputNode, PlaceholderNode, ToplevelData,
             ToplevelNodeBase, WorkspaceNode,
@@ -88,8 +88,13 @@ impl Renderer<'_> {
             render_layer!(output.layers[1]);
             let non_exclusive_rect = output.non_exclusive_rect_rel.get();
             let (x, mut y) = non_exclusive_rect.translate_inv(x, y);
+            let bar_pos = theme.bar_position.get();
             if self.state.show_bar.get() {
-                let bar_bg = Rect::new_sized(0, 0, non_exclusive_rect.width(), bh).unwrap();
+                let bar_y = match bar_pos {
+                    BarPosition::Top => 0,
+                    BarPosition::Bottom => non_exclusive_rect.height() - bh,
+                };
+                let bar_bg = Rect::new_sized(0, bar_y, non_exclusive_rect.width(), bh).unwrap();
                 let bar_bg = self.base.scale_rect(bar_bg);
                 let bar_bg_abs = {
                     let (x, y) = self.base.scale_point(x, y);
@@ -141,7 +146,7 @@ impl Renderer<'_> {
                 if let Some(status) = &rd.status
                     && let Some(texture) = status.tex.texture()
                 {
-                    let (x, y) = self.base.scale_point(x + status.tex_x, y);
+                    let (x, y) = self.base.scale_point(x + status.tex_x, y + bar_y);
                     self.base.render_texture(
                         &texture,
                         None,
@@ -161,12 +166,14 @@ impl Renderer<'_> {
                 for item in output.tray_items.iter() {
                     let data = item.data();
                     if data.surface.buffer.is_some() {
-                        let rect = data.rel_pos.get().move_(x, y);
+                        let rect = data.rel_pos.get().move_(x, y + bar_y);
                         let bounds = self.base.scale_rect(rect);
                         self.render_surface(&data.surface, rect.x1(), rect.y1(), Some(&bounds));
                     }
                 }
-                y += bh + 1;
+                if bar_pos == BarPosition::Top {
+                    y += bh + 1;
+                }
             }
             if let Some(ws) = output.workspace.get() {
                 self.render_workspace(&ws, x, y);
@@ -196,7 +203,12 @@ impl Renderer<'_> {
             && ws.render_highlight.get() > 0
         {
             let color = self.state.theme.colors.highlight.get();
-            let bounds = ws.position.get().at_point(x, y + bh + 1);
+            let bar_pos = theme.bar_position.get();
+            let y_offset = match bar_pos {
+                BarPosition::Top => bh + 1,
+                BarPosition::Bottom => 0,
+            };
+            let bounds = ws.position.get().at_point(x, y + y_offset);
             self.base.ops.push(GfxApiOpt::Sync);
             self.base.fill_boxes(&[bounds], &color, srgb);
         }

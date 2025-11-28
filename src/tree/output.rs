@@ -42,6 +42,7 @@ use {
         scale::Scale,
         state::State,
         text::TextTexture,
+        theme::BarPosition,
         tree::{
             Direction, FindTreeResult, FindTreeUsecase, FoundNode, Node, NodeId, NodeLayerLink,
             NodeLocation, PinnedNode, StackedNode, TddType, TileDragDestination,
@@ -588,7 +589,13 @@ impl OutputNode {
         let active_id = self.workspace.get().map(|w| w.id);
         let non_exclusive_rect = self.non_exclusive_rect.get();
         let output_width = non_exclusive_rect.width();
-        rd.underline = Rect::new_sized(0, bh, output_width, 1).unwrap();
+        let output_height = non_exclusive_rect.height();
+        let bar_pos = theme.bar_position.get();
+        let underline_y = match bar_pos {
+            BarPosition::Top => bh,
+            BarPosition::Bottom => output_height - bh - 1,
+        };
+        rd.underline = Rect::new_sized(0, underline_y, output_width, 1).unwrap();
         for ws in self.workspaces.iter() {
             let mut title_width = bh;
             let title = &*ws.title_texture.borrow();
@@ -611,13 +618,20 @@ impl OutputNode {
                         x1: pos,
                         x2: pos + title_width,
                         tex_x: x,
-                        tex_y: 0,
+                        tex_y: match bar_pos {
+                            BarPosition::Top => 0,
+                            BarPosition::Bottom => output_height - bh,
+                        },
                         tex: texture,
                         ws: ws.deref().clone(),
                     });
                 }
             }
-            let rect = Rect::new_sized(pos, 0, title_width, bh).unwrap();
+            let rect_y = match bar_pos {
+                BarPosition::Top => 0,
+                BarPosition::Bottom => output_height - bh,
+            };
+            let rect = Rect::new_sized(pos, rect_y, title_width, bh).unwrap();
             if Some(ws.id) == active_id {
                 rd.active_workspace = Some(OutputWorkspaceRenderData {
                     rect,
@@ -649,9 +663,13 @@ impl OutputNode {
             }
         }
         let old_full_area = rd.full_area;
+        let bar_y = match bar_pos {
+            BarPosition::Top => non_exclusive_rect.y1(),
+            BarPosition::Bottom => non_exclusive_rect.y2() - bh - 1,
+        };
         rd.full_area = Rect::new_sized(
             non_exclusive_rect.x1(),
-            non_exclusive_rect.y1(),
+            bar_y,
             non_exclusive_rect.width(),
             bh + 1,
         )
@@ -804,10 +822,14 @@ impl OutputNode {
             height,
         ));
         let mut y1 = y1;
+        let mut height = height;
         if self.state.show_bar.get() {
-            y1 += bh + 1;
+            match self.state.theme.bar_position.get() {
+                BarPosition::Top => y1 += bh + 1,
+                BarPosition::Bottom => {}
+            }
+            height = (height - (bh + 1)).max(0);
         }
-        let height = (y2 - y1).max(0);
         self.workspace_rect
             .set(Rect::new_sized_unchecked(x1, y1, width, height));
         self.update_tray_positions();
@@ -1137,7 +1159,12 @@ impl OutputNode {
             self.pointer_down.set(s, (x, y));
         }
         let (x, y) = self.non_exclusive_rect_rel.get().translate(x, y);
-        if y >= self.state.theme.sizes.bar_height() {
+        let bh = self.state.theme.sizes.bar_height();
+        let on_bar = match self.state.theme.bar_position.get() {
+            BarPosition::Top => y < bh,
+            BarPosition::Bottom => y >= self.non_exclusive_rect.get().height() - bh,
+        };
+        if !on_bar {
             return;
         }
         let ws = 'ws: {
@@ -1268,14 +1295,23 @@ impl OutputNode {
         }
         let show_bar = self.state.show_bar.get();
         let bh = self.state.theme.sizes.bar_height();
-        if show_bar && y_abs < rect.y1() + bh + 1 {
+        let bar_pos = self.state.theme.bar_position.get();
+        let on_bar = match bar_pos {
+            BarPosition::Top => y_abs < rect.y1() + bh + 1,
+            BarPosition::Bottom => y_abs >= rect.y2() - bh - 1,
+        };
+        if show_bar && on_bar {
             let rd = &*self.render_data.borrow();
             let (x, _) = rect.translate(x_abs, y_abs);
             let mut last_x2 = 0;
+            let bar_y = match bar_pos {
+                BarPosition::Top => rect.y1(),
+                BarPosition::Bottom => rect.y2() - bh,
+            };
             for t in &rd.titles {
                 if x < t.x2 {
                     return Some(TileDragDestination {
-                        highlight: Rect::new_sized(rect.x1() + t.x1, rect.y1(), t.x2 - t.x1, bh)?,
+                        highlight: Rect::new_sized(rect.x1() + t.x1, bar_y, t.x2 - t.x1, bh)?,
                         ty: TddType::MoveToWorkspace {
                             workspace: t.ws.clone(),
                         },
@@ -1284,32 +1320,23 @@ impl OutputNode {
                 last_x2 = t.x2;
             }
             return Some(TileDragDestination {
-                highlight: Rect::new_sized(
-                    rect.x1() + last_x2,
-                    rect.y1(),
-                    rect.x2() - last_x2,
-                    bh,
-                )?,
+                highlight: Rect::new_sized(rect.x1() + last_x2, bar_y, rect.x2() - last_x2, bh)?,
                 ty: TddType::MoveToNewWorkspace {
                     output: self.clone(),
                 },
             });
         }
-        let bar_height = match show_bar {
-            true => bh + 1,
-            false => 0,
-        };
-        let rect = Rect::new(rect.x1(), rect.y1() + bar_height, rect.x2(), rect.y2())?;
-        if !rect.contains(x_abs, y_abs) {
+        let ws_rect = self.workspace_rect.get();
+        if !ws_rect.contains(x_abs, y_abs) {
             return None;
         }
         let Some(c) = ws.container.get() else {
             return Some(TileDragDestination {
-                highlight: rect,
+                highlight: ws_rect,
                 ty: TddType::NewContainer { workspace: ws },
             });
         };
-        c.tile_drag_destination(source, rect, x_abs, y_abs)
+        c.tile_drag_destination(source, ws_rect, x_abs, y_abs)
     }
 
     pub fn workspace_drag_destination(
@@ -1326,15 +1353,24 @@ impl OutputNode {
             return None;
         }
         let bh = self.state.theme.sizes.bar_height();
-        if y_abs - rect.y1() > bh + 1 {
+        let bar_pos = self.state.theme.bar_position.get();
+        let on_bar = match bar_pos {
+            BarPosition::Top => y_abs < rect.y1() + bh + 1,
+            BarPosition::Bottom => y_abs >= rect.y2() - bh - 1,
+        };
+        if !on_bar {
             return None;
         }
+        let bar_y = match bar_pos {
+            BarPosition::Top => rect.y1(),
+            BarPosition::Bottom => rect.y2() - bh,
+        };
         if self.state.workspace_display_order.get() == WorkspaceDisplayOrder::Sorted {
             if self.workspaces.iter().any(|ws| ws.id == source) {
                 return None;
             }
             return Some(WorkspaceDragDestination {
-                highlight: Rect::new_sized(rect.x1(), rect.y1(), rect.width(), bh)?,
+                highlight: Rect::new_sized(rect.x1(), bar_y, rect.width(), bh)?,
                 output: self.clone(),
                 before: None,
             });
@@ -1356,7 +1392,7 @@ impl OutputNode {
                     Some(WorkspaceDragDestination {
                         highlight: Rect::new_sized(
                             rect.x1() + prev_center,
-                            rect.y1(),
+                            bar_y,
                             center - prev_center,
                             bh,
                         )?,
@@ -1374,7 +1410,7 @@ impl OutputNode {
         return Some(WorkspaceDragDestination {
             highlight: Rect::new_sized(
                 rect.x1() + prev_center,
-                rect.y1(),
+                bar_y,
                 rect.x2() - prev_center,
                 bh,
             )?,
@@ -1390,6 +1426,11 @@ impl OutputNode {
         let mut right = output_width;
         let mut have_any = false;
         let icon_size = self.state.tray_icon_size();
+        let bar_pos = self.state.theme.bar_position.get();
+        let bar_y = match bar_pos {
+            BarPosition::Top => rect.y1(),
+            BarPosition::Bottom => rect.y2() - bh,
+        };
         for item in self.tray_items.rev_iter() {
             if item.data().surface.buffer.is_none() {
                 continue;
@@ -1397,7 +1438,7 @@ impl OutputNode {
             have_any = true;
             right -= bh;
             let rel_pos = Rect::new_sized(right, 1, icon_size, icon_size).unwrap();
-            let abs_pos = rel_pos.move_(rect.x1(), rect.y1());
+            let abs_pos = rel_pos.move_(rect.x1(), bar_y);
             item.set_position(abs_pos, rel_pos);
         }
         if have_any {
@@ -1581,13 +1622,20 @@ impl Node for OutputNode {
             }
             return FindTreeResult::AcceptsInput;
         }
+        let bar_pos = self.state.theme.bar_position.get();
         let bar_height = match self.state.show_bar.get() {
             true => self.state.theme.sizes.bar_height() + 1,
             false => 0,
         };
         if usecase == FindTreeUsecase::SelectWorkspace {
-            if y >= bar_height {
-                y -= bar_height;
+            let on_workspace = match bar_pos {
+                BarPosition::Top => y >= bar_height,
+                BarPosition::Bottom => y < self.non_exclusive_rect.get().height() - bar_height,
+            };
+            if on_workspace {
+                if bar_pos == BarPosition::Top {
+                    y -= bar_height;
+                }
                 if let Some(ws) = self.workspace.get() {
                     tree.push(FoundNode {
                         node: ws.clone(),
@@ -1637,13 +1685,21 @@ impl Node for OutputNode {
             let non_exclusive_rect = self.non_exclusive_rect_rel.get();
             if non_exclusive_rect.contains(x, y) {
                 let (x, y) = non_exclusive_rect.translate(x, y);
-                if y < bar_height {
+                let on_bar = match bar_pos {
+                    BarPosition::Top => y < bar_height,
+                    BarPosition::Bottom => y >= non_exclusive_rect.height() - bar_height,
+                };
+                if on_bar {
                     search_layers = false;
+                    let bar_y = match bar_pos {
+                        BarPosition::Top => 0,
+                        BarPosition::Bottom => non_exclusive_rect.height() - bar_height + 1,
+                    };
                     for item in self.tray_items.iter() {
                         let data = item.data();
                         let pos = data.rel_pos.get();
-                        if pos.contains(x, y) {
-                            let (x, y) = pos.translate(x, y);
+                        if pos.contains(x, y - bar_y) {
+                            let (x, y) = pos.translate(x, y - bar_y);
                             tree.push(FoundNode {
                                 node: item.deref().clone(),
                                 x,
@@ -1654,7 +1710,10 @@ impl Node for OutputNode {
                     }
                 } else {
                     if let Some(ws) = self.workspace.get() {
-                        let y = y - bar_height;
+                        let y = match bar_pos {
+                            BarPosition::Top => y - bar_height,
+                            BarPosition::Bottom => y,
+                        };
                         let len = tree.len();
                         tree.push(FoundNode {
                             node: ws.clone(),

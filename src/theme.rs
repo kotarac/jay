@@ -9,6 +9,32 @@ use {
     std::{cell::Cell, cmp::Ordering, ops::Mul, sync::Arc},
 };
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
+pub enum BarPosition {
+    #[default]
+    Top,
+    Bottom,
+}
+
+impl From<jay_config::theme::BarPosition> for BarPosition {
+    fn from(p: jay_config::theme::BarPosition) -> Self {
+        match p {
+            jay_config::theme::BarPosition::Top => Self::Top,
+            jay_config::theme::BarPosition::Bottom => Self::Bottom,
+        }
+    }
+}
+
+#[expect(clippy::from_over_into)]
+impl Into<jay_config::theme::BarPosition> for BarPosition {
+    fn into(self) -> jay_config::theme::BarPosition {
+        match self {
+            BarPosition::Top => jay_config::theme::BarPosition::Top,
+            BarPosition::Bottom => jay_config::theme::BarPosition::Bottom,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Color {
     r: f32,
@@ -467,6 +493,7 @@ pub struct Theme {
     pub title_font: CloneCell<Option<Arc<String>>>,
     pub default_font: Arc<String>,
     pub show_titles: Cell<bool>,
+    pub bar_position: Cell<BarPosition>,
 }
 
 impl Default for Theme {
@@ -480,6 +507,7 @@ impl Default for Theme {
             title_font: Default::default(),
             default_font,
             show_titles: Cell::new(true),
+            bar_position: Default::default(),
         }
     }
 }

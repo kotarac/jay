@@ -177,6 +177,25 @@ pub fn reset_font() {
     get!().reset_font()
 }
 
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Default)]
+pub enum BarPosition {
+    #[default]
+    Top,
+    Bottom,
+}
+
+/// Sets the position of the bar.
+///
+/// Default: `Top`.
+pub fn set_bar_position(position: BarPosition) {
+    get!().set_bar_position(position);
+}
+
+/// Gets the position of the bar.
+pub fn get_bar_position() -> BarPosition {
+    get!(BarPosition::Top).get_bar_position()
+}
+
 /// Elements of the compositor whose color can be changed.
 pub mod colors {
     use {
