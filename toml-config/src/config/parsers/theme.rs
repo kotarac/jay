@@ -45,6 +45,9 @@ impl Parser for ThemeParser<'_> {
                 bar_bg_color,
                 bar_status_text_color,
                 border_color,
+                focused_border_color,
+            ),
+            (
                 captured_focused_title_bg_color,
                 captured_unfocused_title_bg_color,
                 focused_inactive_title_bg_color,
@@ -71,6 +74,9 @@ impl Parser for ThemeParser<'_> {
                 opt(val("bar-bg-color")),
                 opt(val("bar-status-text-color")),
                 opt(val("border-color")),
+                opt(val("focused-border-color")),
+            ),
+            (
                 opt(val("captured-focused-title-bg-color")),
                 opt(val("captured-unfocused-title-bg-color")),
                 opt(val("focused-inactive-title-bg-color")),
@@ -128,6 +134,7 @@ impl Parser for ThemeParser<'_> {
             bar_bg_color: color!(bar_bg_color),
             bar_status_text_color: color!(bar_status_text_color),
             border_color: color!(border_color),
+            focused_border_color: color!(focused_border_color),
             captured_focused_title_bg_color: color!(captured_focused_title_bg_color),
             captured_unfocused_title_bg_color: color!(captured_unfocused_title_bg_color),
             focused_inactive_title_bg_color: color!(focused_inactive_title_bg_color),

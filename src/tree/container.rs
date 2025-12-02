@@ -105,6 +105,7 @@ pub struct ContainerRenderData {
     pub attention_title_rects: Vec<Rect>,
     pub last_active_rect: Option<Rect>,
     pub border_rects: Vec<Rect>,
+    pub focused_border_rects: Vec<Rect>,
     pub underline_rects: Vec<Rect>,
     pub titles: SmallMapMut<Scale, Vec<ContainerTitle>, 2>,
 }
@@ -826,6 +827,7 @@ impl ContainerNode {
         rd.active_title_rects.clear();
         rd.attention_title_rects.clear();
         rd.border_rects.clear();
+        rd.focused_border_rects.clear();
         rd.underline_rects.clear();
         rd.last_active_rect.take();
         let last_active = self.focus_history.last().map(|v| v.node.node_id());
@@ -851,8 +853,37 @@ impl ContainerNode {
                     Rect::new_sized(rect.x1() - bw, 0, bw, cheight)
                 } else {
                     Rect::new_sized(0, rect.y1() - bw, cwidth, bw)
+                }
+                .unwrap();
+                let prev = child.prev().unwrap();
+                let bw1 = bw / 2;
+                let bw2 = bw - bw1;
+                let (rect1, rect2) = if mono {
+                    (
+                        Rect::new_sized(rect.x1(), 0, bw1, th).unwrap(),
+                        Rect::new_sized(rect.x1() + bw1, 0, bw2, th).unwrap(),
+                    )
+                } else if split == ContainerSplit::Horizontal {
+                    (
+                        Rect::new_sized(rect.x1(), 0, bw1, cheight).unwrap(),
+                        Rect::new_sized(rect.x1() + bw1, 0, bw2, cheight).unwrap(),
+                    )
+                } else {
+                    (
+                        Rect::new_sized(0, rect.y1(), cwidth, bw1).unwrap(),
+                        Rect::new_sized(0, rect.y1() + bw1, cwidth, bw2).unwrap(),
+                    )
                 };
-                rd.border_rects.push(rect.unwrap());
+                if prev.active.get() {
+                    rd.focused_border_rects.push(rect1);
+                } else {
+                    rd.border_rects.push(rect1);
+                }
+                if child.active.get() {
+                    rd.focused_border_rects.push(rect2);
+                } else {
+                    rd.border_rects.push(rect2);
+                }
             }
             if child.active.get() {
                 rd.active_title_rects.push(rect);
@@ -1176,8 +1207,8 @@ impl ContainerNode {
         active: bool,
         depth: u32,
     ) {
-        if depth == 1 {
-            node.active.set(active);
+        if node.active.replace(active) == active {
+            return;
         }
         if active {
             node.focus_history
@@ -1186,6 +1217,7 @@ impl ContainerNode {
         // log::info!("node_child_active_changed");
         self.schedule_render_titles();
         self.schedule_compute_render_positions();
+        self.damage();
         if let Some(parent) = self.toplevel_data.parent.get() {
             parent.node_child_active_changed(self.deref(), active, depth + 1);
         }

@@ -265,10 +265,15 @@ pub mod colors {
         ///
         /// Default: `#333333`.
         const 06 => SEPARATOR_COLOR,
-        /// The color of the border between windows.
+        /// The color of borders for unfocused windows. Also used for focused windows unless
+        /// `focused-border-color` is set.
         ///
         /// Default: `#3f474a`.
         const 07 => BORDER_COLOR,
+        /// The color of borders for a focused window.
+        ///
+        /// Defaults to the value of `border-color`.
+        const 16 => FOCUSED_BORDER_COLOR,
         /// The title text color of an unfocused window.
         ///
         /// Default: `#888888`.

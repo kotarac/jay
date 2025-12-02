@@ -1950,7 +1950,11 @@
           "$ref": "#/$defs/Color"
         },
         "border-color": {
-          "description": "The color of the borders between windows.",
+          "description": "The color of borders for unfocused windows. Also used for focused windows unless `focused-border-color` is set.",
+          "$ref": "#/$defs/Color"
+        },
+        "focused-border-color": {
+          "description": "The color of borders for a focused window.",
           "$ref": "#/$defs/Color"
         },
         "captured-focused-title-bg-color": {

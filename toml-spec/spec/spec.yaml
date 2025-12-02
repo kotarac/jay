@@ -2165,7 +2165,11 @@ Theme:
     border-color:
       ref: Color
       required: false
-      description: The color of the borders between windows.
+      description: The color of borders for unfocused windows. Also used for focused windows unless `focused-border-color` is set.
+    focused-border-color:
+      ref: Color
+      required: false
+      description: The color of borders for a focused window.
     captured-focused-title-bg-color:
       ref: Color
       required: false

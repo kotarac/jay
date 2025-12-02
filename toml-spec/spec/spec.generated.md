@@ -4477,7 +4477,13 @@ The table has the following fields:
 
 - `border-color` (optional):
 
-  The color of the borders between windows.
+  The color of borders for unfocused windows. Also used for focused windows unless `focused-border-color` is set.
+
+  The value of this field should be a [Color](#types-Color).
+
+- `focused-border-color` (optional):
+
+  The color of borders for a focused window.
 
   The value of this field should be a [Color](#types-Color).
 

@@ -267,6 +267,9 @@ impl Renderer<'_> {
             self.base.fill_boxes2(&rd.underline_rects, &c, srgb, x, y);
             let c = self.state.theme.colors.border.get();
             self.base.fill_boxes2(&rd.border_rects, &c, srgb, x, y);
+            let c = self.state.theme.colors.focused_border.get();
+            self.base
+                .fill_boxes2(&rd.focused_border_rects, &c, srgb, x, y);
             if let Some(lar) = &rd.last_active_rect {
                 let c = self
                     .state

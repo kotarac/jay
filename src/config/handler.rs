@@ -2482,6 +2482,7 @@ impl ConfigProxyHandler {
             BAR_BACKGROUND_COLOR => &colors.bar_background,
             SEPARATOR_COLOR => &colors.separator,
             BORDER_COLOR => &colors.border,
+            FOCUSED_BORDER_COLOR => &colors.focused_border,
             UNFOCUSED_TITLE_TEXT_COLOR => &colors.unfocused_title_text,
             FOCUSED_TITLE_TEXT_COLOR => &colors.focused_title_text,
             FOCUSED_INACTIVE_TITLE_TEXT_COLOR => &colors.focused_inactive_title_text,
