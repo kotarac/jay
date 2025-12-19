@@ -576,6 +576,27 @@ impl Seat {
         get!().set_pointer_revert_key(self, sym);
     }
 
+    /// Sets whether the title bar of the currently focused window is shown.
+    ///
+    /// This effectively sets a title visibility override on the focused window.
+    pub fn set_title_visible(self, visible: bool) {
+        get!().set_seat_title_visible(self, visible);
+    }
+
+    /// Returns whether the title bar of the currently focused window is effectively shown.
+    ///
+    /// This considers both window-specific overrides and the global `show_titles` setting.
+    pub fn title_visible(self) -> bool {
+        get!(true).get_seat_title_visible(self)
+    }
+
+    /// Toggles whether the title bar of the currently focused window is shown.
+    ///
+    /// This effectively toggles a title visibility override on the focused window.
+    pub fn toggle_title(self) {
+        get!().toggle_seat_title_visible(self);
+    }
+
     /// Creates a mark for the currently focused window.
     ///
     /// `kc` should be an evdev keycode. If `kc` is none, then the keycode will be

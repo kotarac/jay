@@ -820,6 +820,20 @@ pub enum ClientMessage<'a> {
         connector: Connector,
         use_native_gamut: bool,
     },
+    SetSeatTitleVisible {
+        seat: Seat,
+        visible: bool,
+    },
+    SetWindowTitleVisible {
+        window: Window,
+        visible: bool,
+    },
+    GetSeatTitleVisible {
+        seat: Seat,
+    },
+    GetWindowTitleVisible {
+        window: Window,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -1066,6 +1080,12 @@ pub enum Response {
     },
     GetBarPosition {
         position: BarPosition,
+    },
+    GetSeatTitleVisible {
+        visible: bool,
+    },
+    GetWindowTitleVisible {
+        visible: bool,
     },
 }
 

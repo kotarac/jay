@@ -1,8 +1,10 @@
 .*
 !.gitignore
 !.gitmodules
-!/.cargo
 !/.builds
+!/.cargo
 !/.github
+/flamegraph.svg
+/perf.data*
 /target
 /testruns

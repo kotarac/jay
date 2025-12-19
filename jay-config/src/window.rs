@@ -236,6 +236,27 @@ impl Window {
     pub fn toggle_float_pinned(self) {
         self.set_float_pinned(!self.float_pinned());
     }
+
+    /// Sets whether the title bar of the window is shown.
+    ///
+    /// This sets a title visibility override on the window.
+    pub fn set_title_visible(self, visible: bool) {
+        get!().set_window_title_visible(self, visible);
+    }
+
+    /// Returns whether the title bar of the window is effectively shown.
+    ///
+    /// This considers both window-specific overrides and the global `show_titles` setting.
+    pub fn title_visible(self) -> bool {
+        get!(true).get_window_title_visible(self)
+    }
+
+    /// Toggles whether the title bar of the window is shown.
+    ///
+    /// This toggles a title visibility override on the window.
+    pub fn toggle_title(self) {
+        get!().toggle_window_title_visible(self);
+    }
 }
 
 /// A window matcher.

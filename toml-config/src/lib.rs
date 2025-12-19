@@ -205,6 +205,8 @@ impl Action {
                 SimpleCommand::ToggleBar => b.new(toggle_show_bar),
                 SimpleCommand::ShowTitles(show) => b.new(move || set_show_titles(show)),
                 SimpleCommand::ToggleTitles => b.new(toggle_show_titles),
+                SimpleCommand::ShowTitle(b) => window_or_seat!(s, s.set_title_visible(b)),
+                SimpleCommand::ToggleTitle => window_or_seat!(s, s.toggle_title()),
                 SimpleCommand::FocusHistory(timeline) => {
                     let persistent = state.persistent.clone();
                     b.new(move || persistent.seat.focus_history(timeline))
