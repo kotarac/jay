@@ -1939,6 +1939,34 @@ impl ConfigClient {
         self.send(&ClientMessage::SetPointerRevertKey { seat, key });
     }
 
+    pub fn set_seat_title_visible(&self, seat: Seat, visible: bool) {
+        self.send(&ClientMessage::SetSeatTitleVisible { seat, visible });
+    }
+
+    pub fn set_window_title_visible(&self, window: Window, visible: bool) {
+        self.send(&ClientMessage::SetWindowTitleVisible { window, visible });
+    }
+
+    pub fn get_window_title_visible(&self, window: Window) -> bool {
+        let res = self.send_with_response(&ClientMessage::GetWindowTitleVisible { window });
+        get_response!(res, true, GetWindowTitleVisible { visible });
+        visible
+    }
+
+    pub fn toggle_window_title_visible(&self, window: Window) {
+        self.set_window_title_visible(window, !self.get_window_title_visible(window));
+    }
+
+    pub fn get_seat_title_visible(&self, seat: Seat) -> bool {
+        let res = self.send_with_response(&ClientMessage::GetSeatTitleVisible { seat });
+        get_response!(res, true, GetSeatTitleVisible { visible });
+        visible
+    }
+
+    pub fn toggle_seat_title_visible(&self, seat: Seat) {
+        self.set_seat_title_visible(seat, !self.get_seat_title_visible(seat));
+    }
+
     fn handle_msg(&self, msg: &[u8]) {
         self.handle_msg2(msg);
         self.dispatch_futures();

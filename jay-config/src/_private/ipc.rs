@@ -826,6 +826,20 @@ pub enum ClientMessage<'a> {
         groups: Option<Vec<Group<'a>>>,
         options: Option<Vec<&'a str>>,
     },
+    SetSeatTitleVisible {
+        seat: Seat,
+        visible: bool,
+    },
+    SetWindowTitleVisible {
+        window: Window,
+        visible: bool,
+    },
+    GetSeatTitleVisible {
+        seat: Seat,
+    },
+    GetWindowTitleVisible {
+        window: Window,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -1075,6 +1089,12 @@ pub enum Response {
     },
     KeymapFromNames {
         keymap: Keymap,
+    },
+    GetSeatTitleVisible {
+        visible: bool,
+    },
+    GetWindowTitleVisible {
+        visible: bool,
     },
 }
 

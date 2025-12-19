@@ -873,7 +873,6 @@ SimpleActionName:
     - `move-right`
     - `split-horizontal`
     - `split-vertical`
-    - `toggle-split`
     - `tile-horizontal`
     - `tile-vertical`
     - `toggle-split`
@@ -889,6 +888,9 @@ SimpleActionName:
     - `toggle-float-pinned`
     - `pin-float`
     - `unpin-float`
+    - `show-title`
+    - `hide-title`
+    - `toggle-title`
 
 
     - Example:
@@ -913,8 +915,6 @@ SimpleActionName:
       description: Move the currently focused window one down.
     - value: move-up
       description: Move the currently focused window one up.
-    - value: move-right
-      description: Move the currently focused window one to the right.
     - value: move-right
       description: Move the currently focused window one to the right.
     - value: split-horizontal
@@ -1036,6 +1036,18 @@ SimpleActionName:
       description: Shows window titles.
     - value: hide-titles
       description: Hides window titles.
+    - value: show-title
+      description: |
+        Shows the title bar of a window, overriding the global `show-titles` setting,
+        except for windows in mono containers.
+    - value: hide-title
+      description: |
+        Hides the title bar of a window, overriding the global `show-titles` setting,
+        except for windows in mono containers.
+    - value: toggle-title
+      description: |
+        Toggles the title bar of a window, overriding the global `show-titles` setting,
+        except for windows in mono containers.
     - value: toggle-titles
       description: Toggles window titles.
     - value: focus-prev

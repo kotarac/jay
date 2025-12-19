@@ -4023,7 +4023,6 @@ instead fo the focused window:
 - `move-right`
 - `split-horizontal`
 - `split-vertical`
-- `toggle-split`
 - `tile-horizontal`
 - `tile-vertical`
 - `toggle-split`
@@ -4039,6 +4038,9 @@ instead fo the focused window:
 - `toggle-float-pinned`
 - `pin-float`
 - `unpin-float`
+- `show-title`
+- `hide-title`
+- `toggle-title`
 
 
 - Example:
@@ -4079,10 +4081,6 @@ The string should have one of the following values:
 - `move-up`:
 
   Move the currently focused window one up.
-
-- `move-right`:
-
-  Move the currently focused window one to the right.
 
 - `move-right`:
 
@@ -4265,6 +4263,21 @@ The string should have one of the following values:
 - `hide-titles`:
 
   Hides window titles.
+
+- `show-title`:
+
+  Shows the title bar of a window, overriding the global `show-titles` setting,
+  except for windows in mono containers.
+
+- `hide-title`:
+
+  Hides the title bar of a window, overriding the global `show-titles` setting,
+  except for windows in mono containers.
+
+- `toggle-title`:
+
+  Toggles the title bar of a window, overriding the global `show-titles` setting,
+  except for windows in mono containers.
 
 - `toggle-titles`:
 

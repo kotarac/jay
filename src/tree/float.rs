@@ -177,8 +177,9 @@ impl FloatNode {
         let pos = self.position.get();
         let theme = &self.state.theme;
         let bw = theme.sizes.border_width.get();
-        let th = theme.title_height();
-        let tpuh = theme.title_plus_underline_height();
+        let title_override = child.tl_data().show_title.get();
+        let th = theme.title_height_for(title_override);
+        let tpuh = theme.title_plus_underline_height_for(title_override);
         let cpos = Rect::new_sized_saturating(
             pos.x1() + bw,
             pos.y1() + bw + tpuh,
@@ -186,7 +187,7 @@ impl FloatNode {
             pos.height() - 2 * bw - tpuh,
         );
         let tr = Rect::new_sized_saturating(bw, bw, pos.width() - 2 * bw, th);
-        child.clone().tl_change_extents(&cpos);
+        child.tl_change_extents(&cpos);
         self.title_rect.set(tr);
         self.layout_scheduled.set(false);
         self.schedule_render_titles();
@@ -213,6 +214,9 @@ impl FloatNode {
         };
         let scales = self.state.scales.lock();
         let tr = self.title_rect.get();
+        if tr.height() == 0 {
+            return on_completed.event();
+        }
         let tt = &mut *self.title_textures.borrow_mut();
         for (scale, _) in scales.iter() {
             let tex = tt.get_or_insert_with(*scale, || TextTexture::new(&self.state, &ctx));
@@ -248,7 +252,7 @@ impl FloatNode {
 
     fn render_title_phase2(&self) {
         let theme = &self.state.theme;
-        let th = theme.title_height();
+        let th = self.title_rect.get().height();
         let bw = theme.sizes.border_width.get();
         let title = self.title.borrow();
         let tt = &*self.title_textures.borrow();
@@ -258,7 +262,7 @@ impl FloatNode {
             }
         }
         let pos = self.position.get();
-        if self.visible.get() && pos.width() >= 2 * bw {
+        if self.visible.get() && pos.width() >= 2 * bw && th > 0 {
             let tr =
                 Rect::new_sized_saturating(pos.x1() + bw, pos.y1() + bw, pos.width() - 2 * bw, th);
             self.state.damage(tr);
@@ -276,8 +280,9 @@ impl FloatNode {
         let x = x.round_down();
         let y = y.round_down();
         let theme = &self.state.theme;
+        let title_override = self.child.get().and_then(|c| c.tl_data().show_title.get());
         let bw = theme.sizes.border_width.get();
-        let tpuh = theme.title_plus_underline_height();
+        let tpuh = theme.title_plus_underline_height_for(title_override);
         let mut seats = self.cursors.borrow_mut();
         let seat_state = seats.entry(id).or_insert_with(|| CursorState {
             cursor: KnownCursor::Default,
@@ -438,7 +443,7 @@ impl FloatNode {
             return;
         }
         let bw = self.state.theme.sizes.border_width.get();
-        let th = self.state.theme.title_height();
+        let th = self.title_rect.get().height();
         let mut x1 = pos.x1();
         let mut x2 = pos.x2();
         let mut y1 = pos.y1();
@@ -553,7 +558,7 @@ impl FloatNode {
             _ => return,
         };
         let bw = self.state.theme.sizes.border_width.get();
-        let th = self.state.theme.title_height();
+        let th = self.title_rect.get().height();
         let mut is_icon_press = false;
         if pressed && cursor_data.x >= bw && cursor_data.y >= bw && cursor_data.y < bw + th {
             enum FloatIcon {
@@ -645,9 +650,9 @@ impl FloatNode {
         abs_y: i32,
     ) -> Option<TileDragDestination> {
         let child = self.child.get()?;
-        let theme = &self.state.theme.sizes;
-        let bw = theme.border_width.get();
-        let tpuh = self.state.theme.title_plus_underline_height();
+        let theme = &self.state.theme;
+        let bw = theme.sizes.border_width.get();
+        let tpuh = theme.title_plus_underline_height_for(child.tl_data().show_title.get());
         let pos = self.position.get();
         let body = Rect::new(
             pos.x1() + bw,
@@ -732,7 +737,8 @@ impl Node for FloatNode {
         usecase: FindTreeUsecase,
     ) -> FindTreeResult {
         let theme = &self.state.theme;
-        let tpuh = theme.title_plus_underline_height();
+        let title_override = self.child.get().and_then(|c| c.tl_data().show_title.get());
+        let tpuh = theme.title_plus_underline_height_for(title_override);
         let bw = theme.sizes.border_width.get();
         let pos = self.position.get();
         if x < bw || x >= pos.width() - bw {
@@ -928,7 +934,8 @@ impl ContainingNode for FloatNode {
 
     fn cnode_set_child_position(self: Rc<Self>, _child: &dyn Node, x: i32, y: i32) {
         let theme = &self.state.theme;
-        let tpuh = theme.title_plus_underline_height();
+        let title_override = self.child.get().and_then(|c| c.tl_data().show_title.get());
+        let tpuh = theme.title_plus_underline_height_for(title_override);
         let bw = theme.sizes.border_width.get();
         let (x, y) = (x - bw, y - tpuh - bw);
         let pos = self.position.get();
@@ -950,7 +957,8 @@ impl ContainingNode for FloatNode {
         new_y2: Option<i32>,
     ) {
         let theme = &self.state.theme;
-        let tpuh = theme.title_plus_underline_height();
+        let title_override = self.child.get().and_then(|c| c.tl_data().show_title.get());
+        let tpuh = theme.title_plus_underline_height_for(title_override);
         let bw = theme.sizes.border_width.get();
         let pos = self.position.get();
         let mut x1 = pos.x1();

@@ -81,6 +81,8 @@ pub enum SimpleCommand {
     ToggleBar,
     ShowTitles(bool),
     ToggleTitles,
+    ShowTitle(bool),
+    ToggleTitle,
     FocusHistory(Timeline),
     FocusLayerRel(LayerDirection),
     FocusTiles,

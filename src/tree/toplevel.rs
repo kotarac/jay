@@ -69,6 +69,7 @@ pub trait ToplevelNode: ToplevelNodeBase {
     fn tl_destroy(&self);
     fn tl_pinned(&self) -> bool;
     fn tl_set_pinned(&self, self_pinned: bool, pinned: bool);
+    fn tl_set_title_visible(&self, visible: bool);
     fn tl_set_float(&self, float: Option<&Rc<FloatNode>>);
     fn tl_mark_ancestor_fullscreen(&self, fullscreen: bool);
     fn tl_mark_fullscreen(&self, fullscreen: bool);
@@ -99,7 +100,7 @@ impl<T: ToplevelNodeBase> ToplevelNode for T {
         if let Some(parent) = data.parent.get() {
             parent.node_child_title_changed(self, &title);
         }
-        if let Some(data) = data.fullscrceen_data.borrow_mut().deref() {
+        if let Some(data) = data.fullscreen_data.borrow_mut().deref() {
             data.placeholder
                 .tl_data()
                 .title
@@ -226,6 +227,19 @@ impl<T: ToplevelNodeBase> ToplevelNode for T {
             return;
         };
         parent.cnode_set_pinned(pinned);
+    }
+
+    fn tl_set_title_visible(&self, visible: bool) {
+        let data = self.tl_data();
+        data.show_title.set(Some(visible));
+        if let Some(parent) = data.parent.get() {
+            if let Some(c) = parent.clone().node_into_container() {
+                c.schedule_layout();
+            } else if let Some(f) = parent.cnode_get_float() {
+                f.schedule_layout();
+            }
+        }
+        data.state.tree_changed();
     }
 
     fn tl_set_float(&self, float: Option<&Rc<FloatNode>>) {
@@ -377,7 +391,7 @@ pub struct ToplevelData {
     pub pinned: Cell<bool>,
     pub is_fullscreen: Cell<bool>,
     pub self_or_ancestor_is_fullscreen: Cell<bool>,
-    pub fullscrceen_data: RefCell<Option<FullscreenedData>>,
+    pub fullscreen_data: RefCell<Option<FullscreenedData>>,
     pub workspace: CloneCell<Option<Rc<WorkspaceNode>>>,
     pub title: RefCell<String>,
     pub parent: CloneCell<Option<Rc<dyn ContainingNode>>>,
@@ -404,6 +418,7 @@ pub struct ToplevelData {
     pub just_mapped_scheduled: Cell<bool>,
     pub seat_foci: CopyHashMap<SeatId, ()>,
     pub content_type: Cell<Option<ContentType>>,
+    pub show_title: Cell<Option<bool>>,
 }
 
 impl ToplevelData {
@@ -433,7 +448,7 @@ impl ToplevelData {
             pinned: Cell::new(false),
             is_fullscreen: Default::default(),
             self_or_ancestor_is_fullscreen: Default::default(),
-            fullscrceen_data: Default::default(),
+            fullscreen_data: Default::default(),
             workspace: Default::default(),
             title: RefCell::new(title),
             parent: Default::default(),
@@ -457,6 +472,7 @@ impl ToplevelData {
             just_mapped_scheduled: Cell::new(false),
             seat_foci: Default::default(),
             content_type: Default::default(),
+            show_title: Default::default(),
         }
     }
 
@@ -545,7 +561,7 @@ impl ToplevelData {
     }
 
     pub fn detach_node(&self, node: &dyn Node) {
-        if let Some(fd) = self.fullscrceen_data.borrow_mut().take() {
+        if let Some(fd) = self.fullscreen_data.borrow_mut().take() {
             fd.placeholder.tl_destroy();
         }
         if let Some(parent) = self.parent.take() {
@@ -730,7 +746,7 @@ impl ToplevelData {
             log::info!("Cannot fullscreen a placeholder node");
             return;
         }
-        let mut data = self.fullscrceen_data.borrow_mut();
+        let mut data = self.fullscreen_data.borrow_mut();
         if data.is_some() {
             log::info!("Cannot fullscreen a node that is already fullscreen");
             return;
@@ -783,7 +799,7 @@ impl ToplevelData {
             log::warn!("Cannot unset fullscreen on a node that is not fullscreen");
             return;
         }
-        let fd = match self.fullscrceen_data.borrow_mut().take() {
+        let fd = match self.fullscreen_data.borrow_mut().take() {
             Some(fd) => fd,
             _ => {
                 log::error!("is_fullscreen = true but data is None");

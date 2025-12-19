@@ -2741,6 +2741,49 @@ impl ConfigProxyHandler {
         Ok(())
     }
 
+    fn handle_set_seat_title_visible(&self, seat: Seat, visible: bool) -> Result<(), CphError> {
+        let seat = self.get_seat(seat)?;
+        if let Some(tl) = seat.get_keyboard_node().node_toplevel() {
+            tl.tl_set_title_visible(visible);
+        }
+        Ok(())
+    }
+
+    fn handle_set_window_title_visible(
+        &self,
+        window: Window,
+        visible: bool,
+    ) -> Result<(), CphError> {
+        let tl = self.get_window(window)?;
+        tl.tl_set_title_visible(visible);
+        Ok(())
+    }
+
+    fn handle_get_window_title_visible(&self, window: Window) -> Result<(), CphError> {
+        let tl = self.get_window(window)?;
+        let visible = tl
+            .tl_data()
+            .show_title
+            .get()
+            .unwrap_or_else(|| self.state.theme.show_titles.get());
+        self.respond(Response::GetWindowTitleVisible { visible });
+        Ok(())
+    }
+
+    fn handle_get_seat_title_visible(&self, seat: Seat) -> Result<(), CphError> {
+        let seat = self.get_seat(seat)?;
+        let visible = if let Some(tl) = seat.get_keyboard_node().node_toplevel() {
+            tl.tl_data()
+                .show_title
+                .get()
+                .unwrap_or_else(|| self.state.theme.show_titles.get())
+        } else {
+            self.state.theme.show_titles.get()
+        };
+        self.respond(Response::GetSeatTitleVisible { visible });
+        Ok(())
+    }
+
     pub fn handle_request(self: &Rc<Self>, msg: &[u8]) {
         if let Err(e) = self.handle_request_(msg) {
             log::error!("Could not handle client request: {}", ErrorFmt(e));
@@ -3373,6 +3416,18 @@ impl ConfigProxyHandler {
             } => self
                 .handle_keymap_from_names(rules, model, groups, options)
                 .wrn("keymap_from_names")?,
+            ClientMessage::SetSeatTitleVisible { seat, visible } => self
+                .handle_set_seat_title_visible(seat, visible)
+                .wrn("set_seat_title_visible")?,
+            ClientMessage::SetWindowTitleVisible { window, visible } => self
+                .handle_set_window_title_visible(window, visible)
+                .wrn("set_window_title_visible")?,
+            ClientMessage::GetSeatTitleVisible { seat } => self
+                .handle_get_seat_title_visible(seat)
+                .wrn("get_seat_title_visible")?,
+            ClientMessage::GetWindowTitleVisible { window } => self
+                .handle_get_window_title_visible(window)
+                .wrn("get_window_title_visible")?,
         }
         Ok(())
     }

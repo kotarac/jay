@@ -221,6 +221,13 @@ impl TestConfig {
         })
     }
 
+    pub fn set_split(&self, seat: SeatId, axis: Axis) -> TestResult {
+        self.send(ClientMessage::SetSeatSplit {
+            seat: Seat(seat.raw() as _),
+            axis,
+        })
+    }
+
     pub fn create_split(&self, seat: SeatId, axis: Axis) -> TestResult {
         self.send(ClientMessage::CreateSeatSplit {
             seat: Seat(seat.raw() as _),
@@ -284,6 +291,26 @@ impl TestConfig {
         })
     }
 
+    pub fn set_title_visible(&self, seat: SeatId, visible: bool) -> TestResult {
+        self.send(ClientMessage::SetSeatTitleVisible {
+            seat: Seat(seat.raw() as _),
+            visible,
+        })
+    }
+
+    pub fn get_title_visible(&self, seat: SeatId) -> Result<bool, TestError> {
+        let reply = self.send_with_reply(ClientMessage::GetSeatTitleVisible {
+            seat: Seat(seat.raw() as _),
+        })?;
+        get_response!(reply, GetSeatTitleVisible { visible });
+        Ok(visible)
+    }
+
+    pub fn toggle_title(&self, seat: SeatId) -> TestResult {
+        let current = self.get_title_visible(seat)?;
+        self.set_title_visible(seat, !current)
+    }
+
     fn clear(&self) {
         unsafe {
             if let Some(srv) = self.srv.take() {
@@ -327,9 +354,19 @@ impl TestConfig {
         get_response!(reply, GetShowBar { show });
         Ok(show)
     }
-
     pub fn set_show_titles(&self, show: bool) -> TestResult {
         self.send(ClientMessage::SetShowTitles { show })
+    }
+
+    pub fn get_show_titles(&self) -> Result<bool, TestError> {
+        let reply = self.send_with_reply(ClientMessage::GetShowTitles)?;
+        get_response!(reply, GetShowTitles { show });
+        Ok(show)
+    }
+
+    pub fn toggle_show_titles(&self) -> TestResult {
+        let current = self.get_show_titles()?;
+        self.set_show_titles(!current)
     }
 }
 

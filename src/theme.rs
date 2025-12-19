@@ -518,19 +518,23 @@ impl Theme {
     }
 
     pub fn title_height(&self) -> i32 {
-        if self.show_titles.get() {
+        self.title_height_for(None)
+    }
+
+    pub fn title_height_for(&self, title_override: Option<bool>) -> i32 {
+        if title_override.unwrap_or_else(|| self.show_titles.get()) {
             self.sizes.title_height.get()
         } else {
             0
         }
     }
 
-    pub fn title_underline_height(&self) -> i32 {
-        if self.show_titles.get() { 1 } else { 0 }
+    pub fn title_plus_underline_height(&self) -> i32 {
+        self.title_plus_underline_height_for(None)
     }
 
-    pub fn title_plus_underline_height(&self) -> i32 {
-        if self.show_titles.get() {
+    pub fn title_plus_underline_height_for(&self, title_override: Option<bool>) -> i32 {
+        if title_override.unwrap_or_else(|| self.show_titles.get()) {
             self.sizes.title_height.get() + 1
         } else {
             0
