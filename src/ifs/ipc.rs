@@ -286,7 +286,7 @@ pub fn cancel_offers<S: DynDataSource>(src: &S, cancel_privileged: bool) {
 pub fn cancel_offer<T: IpcVtable>(offer: &T::Offer) {
     let data = offer.offer_data();
     data.source.take();
-    destroy_data_offer::<T>(&offer);
+    cancel_data_offer::<T>(&offer);
 }
 
 pub fn detach_seat<S: DataSource>(src: &S, seat: &Rc<WlSeatGlobal>) {
@@ -395,12 +395,22 @@ pub fn destroy_data_source<T: IpcVtable>(src: &T::Source) {
 }
 
 pub fn destroy_data_offer<T: IpcVtable>(offer: &T::Offer) {
+    destroy_data_offer_::<T>(offer, false);
+}
+
+pub fn cancel_data_offer<T: IpcVtable>(offer: &T::Offer) {
+    destroy_data_offer_::<T>(offer, true);
+}
+
+fn destroy_data_offer_<T: IpcVtable>(offer: &T::Offer, send_unset: bool) {
     let data = offer.offer_data();
     if let Some(device) = data.device.take() {
         let device_data = T::get_device_data(&device);
         match data.shared.role.get() {
             Role::Selection => {
-                T::send_selection(&device, None);
+                if send_unset {
+                    T::send_selection(&device, None);
+                }
                 device_data.selection.take();
             }
             Role::Dnd => {

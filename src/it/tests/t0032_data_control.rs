@@ -38,6 +38,8 @@ async fn test(run: Rc<TestRun>) -> TestResult {
     let data_control3 = client3.registry.get_data_control_manager().await?;
     let dev3 = data_control3.get_data_device(&seat3.seat)?;
     let selection = dev3.selection.expect()?;
+    client3.sync().await;
+    tassert!(selection.last()?.is_none());
 
     dev2.set_selection(&source2)?;
     client2.sync().await;
@@ -59,6 +61,9 @@ async fn test(run: Rc<TestRun>) -> TestResult {
         rfd.borrow().read_to_end(&mut buf)?;
         tassert_eq!(buf, b"abcd");
     }
+    sel.destroy()?;
+    client3.sync().await;
+    selection.none()?;
 
     tassert_eq!(source2.cancelled.get(), false);
     dev1.set_selection(&source1, serial)?;

@@ -8,7 +8,7 @@ use {
         ifs::{
             ipc::{
                 DataOfferId, DataSourceId, DynDataOffer, DynDataSource, IpcLocation, IpcVtable,
-                SourceData, add_data_source_mime_type, destroy_data_device, destroy_data_offer,
+                SourceData, add_data_source_mime_type, cancel_data_offer, destroy_data_device,
                 destroy_data_source, receive_data_offer,
                 x_data_device::{XClipboardIpc, XIpc, XIpcDevice, XPrimarySelectionIpc},
                 x_data_offer::XDataOffer,
@@ -181,7 +181,7 @@ struct SelectionData<T: XIpc> {
 impl<T: XIpc> SelectionData<T> {
     fn destroy(&self) {
         for offer in self.offers.lock().drain_values() {
-            destroy_data_offer::<T>(&offer.offer);
+            cancel_data_offer::<T>(&offer.offer);
         }
         self.active_offer.take();
         self.destroy_sources();
@@ -749,7 +749,7 @@ impl Wm {
     ) {
         let mut mime_types = vec![];
         if let Some(offer) = sd.offers.remove(&seat) {
-            destroy_data_offer::<T>(&offer.offer);
+            cancel_data_offer::<T>(&offer.offer);
             mime_types = mem::take(offer.mime_types.borrow_mut().deref_mut());
         }
         sd.offers.set(
@@ -771,7 +771,7 @@ impl Wm {
         let offer = match offer {
             None => {
                 if let Some(offer) = sd.offers.remove(&seat) {
-                    destroy_data_offer::<T>(&offer.offer);
+                    cancel_data_offer::<T>(&offer.offer);
                     if offer.active.get() {
                         sd.active_offer.take();
                     }
@@ -782,13 +782,13 @@ impl Wm {
         };
         let enhanced = match sd.offers.get(&seat) {
             None => {
-                destroy_data_offer::<T>(&offer);
+                cancel_data_offer::<T>(&offer);
                 return;
             }
             Some(e) => e,
         };
         if !rc_eq(&enhanced.offer, &offer) {
-            destroy_data_offer::<T>(&offer);
+            cancel_data_offer::<T>(&offer);
             return;
         }
         if !enhanced.active.replace(true)
