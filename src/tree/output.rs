@@ -893,16 +893,7 @@ impl OutputNode {
                 pinned.deref().clone().set_workspace(ws, false);
             }
             if old.is_empty() {
-                for jw in old.jay_workspaces.lock().values() {
-                    jw.send_destroyed();
-                    jw.workspace.set(None);
-                }
-                for wh in old.ext_workspaces.lock().values() {
-                    wh.handle_destroyed();
-                }
-                old.clear();
-                self.state.workspaces.remove(&*old.name);
-                self.state.trigger_cci(CCI_WORKSPACES);
+                old.destroy_empty_workspace();
             } else {
                 old.set_visible(false);
                 old.flush_jay_workspaces();

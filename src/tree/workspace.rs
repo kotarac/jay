@@ -249,6 +249,42 @@ impl WorkspaceNode {
         self.stacked.is_empty() && ns.fullscreen.is_none() && ns.container.is_none()
     }
 
+    fn can_destroy_empty_workspace(&self) -> bool {
+        if self.ty == WorkspaceType::Overlay {
+            return false;
+        }
+        let output = self.node_state.output.get();
+        if output.is_dummy {
+            return false;
+        }
+        if !self.is_empty() {
+            return false;
+        }
+        if output.node_state.workspace.id() == Some(self.id) {
+            return false;
+        }
+        true
+    }
+
+    pub fn destroy_empty_workspace(self: &Rc<Self>) {
+        if !self.can_destroy_empty_workspace() {
+            return;
+        }
+        let output = self.node_state.output.get();
+        for jw in self.jay_workspaces.lock().values() {
+            jw.send_destroyed();
+            jw.workspace.set(None);
+        }
+        for wh in self.ext_workspaces.lock().values() {
+            wh.handle_destroyed();
+        }
+        self.clear();
+        self.state.workspaces.remove(&*self.name);
+        self.state.trigger_cci(CCI_WORKSPACES);
+        output.schedule_update_render_data();
+        self.state.tree_changed();
+    }
+
     pub fn container_visible(&self) -> bool {
         let ns = &self.node_state;
         ns.visible.get() && ns.fullscreen.is_none()
@@ -564,12 +600,18 @@ impl ContainingNode for WorkspaceNode {
             self.discard_child_properties(&*container);
             ns.container.set(None);
             self.state.damage(ns.position.get());
+            if self.is_empty() {
+                self.destroy_empty_workspace();
+            }
             return;
         }
         if let Some(fs) = ns.fullscreen.get()
             && fs.node_id() == child.node_id()
         {
             self.remove_fullscreen_node();
+            if self.is_empty() {
+                self.destroy_empty_workspace();
+            }
             return;
         }
         log::error!("Trying to remove child that's not a child");
@@ -665,6 +707,9 @@ pub fn move_ws_to_output(ws: &Rc<WorkspaceNode>, target: &Rc<OutputNode>, config
         ws.state.show_workspace2(None, target, &ws);
     } else {
         ws.set_visible(false);
+        if ws.is_empty() {
+            ws.destroy_empty_workspace();
+        }
     }
     ws.flush_jay_workspaces();
     if let Some(ws) = new_source_ws {

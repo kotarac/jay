@@ -37,6 +37,7 @@ async fn test(run: Rc<TestRun>) -> Result<(), TestError> {
     let (win, _) = client.restore_window(&session, "win").await?;
     win.map().await?;
     tassert_eq!(win.workspace_id(), Some(ws2.id));
+    let ws3 = setup.outputs[1].node.create_normal_workspace("3");
     win.set_workspace(&ws3);
 
     let session = sm.get_session(REASON_RECOVER, Some(&session_id))?;
